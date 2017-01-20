@@ -32,6 +32,7 @@ ul.tabs {margin: 0; padding: 0; list-style: none; display: inline-block; width: 
 	.input-small {display: inline-block; height:0; width: 0;}
 	.file-inputs {margin: 10px; }
 	.tab-container {margin-top: 20px; }
+	.output .output-text {width: 10%;}
 }
 
 @media only screen and (max-width: 1100px) {

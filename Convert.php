@@ -189,11 +189,21 @@ function findMQStyles($stylesArray, $selector, $indent)
 	return $allMQ;
 }
 
-function advancedStyleFinder($node)
+function advancedStyleFinder($node, $indent)
 {
 	global $StyleSheetArrayCSS;
 	$nodeName = getNodeName($node);
 	$moreStyles = '';
+	if (strpos($nodeName, '.') !== false) {
+		$allSelectors = preg_split( "/((?=\.)|(?=#))/", $nodeName);
+		unset($allSelectors[0]);
+		if (count($allSelectors) > 1) {
+			foreach ($allSelectors as $selector) {
+				$moreStyles .= getStyleSheetSelector($selector, $indent);
+			}
+		}
+	}
+
 	if (isset($node["parentNode"]["class"])) {
 		if (isset($StyleSheetArrayCSS["." . $node["parentNode"]["class"] . " " . $nodeName])) {
 			$moreStyles .= $StyleSheetArrayCSS["." . $node["parentNode"]["class"] . " " . $nodeName];
@@ -248,6 +258,7 @@ function getStyleSheetSelector($selector, $indent)
 
 function displaySCSS($node, $indent = '')
 {
+	global $StyleSheetArrayMQ;
 	if (is_array($node)) {
 		$nodeName = getNodeName($node);
 		if ($nodeName == false) {
@@ -289,8 +300,14 @@ function displaySCSS($node, $indent = '')
 		}
 		if (isset($nodeName) && $nodeName !== false) {
 			echo $indent . $nodeName . " {\n";
-			$adv = advancedStyleFinder($node);
+			$adv = advancedStyleFinder($node, $indent);
 			echo getInlineStyles($adv, $indent);
+			if (isset($node["parentNode"])) {
+				echo findMQStyles($StyleSheetArrayMQ, ("." . $node["parentNode"]["class"] . " " . $nodeName), ($indent . "  "));
+				echo findMQStyles($StyleSheetArrayMQ, ($node["parentNode"]["tag"] . " " . $nodeName), ($indent . "  "));
+				echo findMQStyles($StyleSheetArrayMQ, ("#" . $node["parentNode"]["id"] . " " . $nodeName), ($indent . "  "));
+			}
+
 			$sheetStyles = getStyleSheetSelector($nodeName, $indent);
 			if ($sheetStyles != false) {
 				echo $sheetStyles;
