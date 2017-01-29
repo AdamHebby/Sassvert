@@ -7,6 +7,7 @@ class Node
     protected $tag;
     protected $id;
     protected $nodeName;
+    protected $nodeNameShort;
     protected $childrenNodesObj = array();
     protected $childrenID       = array();
     protected $parentID;
@@ -15,12 +16,13 @@ class Node
 
     public function __construct($customID, $tag, $nodeName, $class = null, $id = null, $inlineStyles = null)
     {
-        $this->customID     = $customID;
-        $this->tag          = $tag;
-        $this->nodeName     = $nodeName;
-        $this->class        = $class;
-        $this->id           = $id;
-        $this->inlineStyles = $inlineStyles;
+        $this->customID      = $customID;
+        $this->tag           = $tag;
+        $this->nodeName      = $nodeName[0];
+        $this->nodeNameShort = $nodeName[1];
+        $this->class         = $class;
+        $this->id            = $id;
+        $this->inlineStyles  = $inlineStyles;
     }
     public function setStyles($styles)
     {
@@ -110,6 +112,10 @@ class Node
     public function getNodeName()
     {
         return $this->nodeName;
+    }
+    public function getNodeNameShort()
+    {
+        return $this->nodeNameShort;
     }
     public function getChildrenID()
     {

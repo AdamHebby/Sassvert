@@ -42,7 +42,7 @@ class SassVert_Converter
             $this->mediaStyles = $StyleSheetArray[1];
             $this->parseCSS();
             $this->linkCSS();
-            // $this->makeSCSSFile();
+            $this->makeSCSSFile();
         }
     }
     function parseCSS()
@@ -90,18 +90,29 @@ class SassVert_Converter
     {
         if ($nodeTree == null) {
             $nodeTree = $this->nodeTree;
+        } elseif (is_array($nodeTree) == false) {
+            $nodeTree = array($nodeTree);
         }
         foreach ($nodeTree as $node) {
-            echo $this->indent . $node->getNodeName() . " {\n";
+            fwrite($this->outputSCSSFile, $this->indent . $node->getNodeName() . " {\n");
             $this->indentAdd();
-            echo $node->printStyles($this->indent) . "\n";
+            fwrite($this->outputSCSSFile, $node->printStyles($this->indent) . "\n");
             if ($node->hasChildren()) {
-                $this->PrintSCSS($node->getChildrenNodesObj());
+                $nodeList = array();
+                foreach ($node->getChildrenNodesObj() as $child) {
+                    if (in_array($child->getNodeNameShort(), $nodeList)) {
+                        // Break Down -- TODO
+                        $this->PrintSCSS($child);
+                    } else {
+                        $nodeList[] = $child->getNodeNameShort();
+                        $this->PrintSCSS($child);
+                    }
+                }
                 $this->indentTake();
-                echo $this->indent . "} \n";
+                fwrite($this->outputSCSSFile, $this->indent . "} \n");
             } else {
                 $this->indentTake();
-                echo $this->indent . "} \n";
+                fwrite($this->outputSCSSFile, $this->indent . "} \n");
             }
         }
     }
@@ -271,7 +282,7 @@ class SassVert_Converter
                 $inlineStyles                  = isset($node["styles"]) ? $node["styles"] : null;
                 $nodeName                      = $this->getNodeName($node);
                 $newNode                       = new Node($this->count, $tag, $nodeName, $class, $id, $inlineStyles);
-                $this->nodeNames[$this->count] = $nodeName;
+                $this->nodeNames[$this->count] = $nodeName[0];
                 $this->nodes[$this->count]     = $newNode;
                 $this->count++;
                 
@@ -305,6 +316,7 @@ class SassVert_Converter
             $class    = null;
             $id       = null;
             $nodeName = null;
+            $nodeNameShort = null;
             if (isset($node["tag"])) {
                 $tag = $node["tag"];
             } else {
@@ -313,18 +325,22 @@ class SassVert_Converter
             if (isset($node["class"])) {
                 $class    = "." . str_replace(" ", ".", $node["class"]);
                 $nodeName = $class;
+                $short = split(" ", trim($node["class"]));
+                $nodeNameShort = "." . $short[0];
             } elseif (isset($node["id"])) {
                 $id       = "#" . $node["id"];
                 $nodeName = $id;
+                $nodeNameShort = $id;
             } elseif (isset($tag)) {
                 if ($tag == "input" && isset($node["type"])) {
                     $type = $node["type"];
                     $tag  = $tag . "[type=\"$type\"]";
                 }
                 $nodeName = $tag;
+                $nodeNameShort = $tag;
             }
             if (isset($nodeName)) {
-                return $nodeName;
+                return array($nodeName, $nodeNameShort);
             } else {
                 return false;
             }
