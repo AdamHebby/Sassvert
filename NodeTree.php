@@ -50,7 +50,7 @@ class SassVert_Converter
         $cssStyles = $this->cssStyles;
         foreach ($cssStyles as $key => $value) {
             if (preg_match("/((?=,)|(?=, ))/", $key)) {
-                $newKeys = split(",", trim($key));
+                $newKeys = preg_split("/,/", trim($key));
                 foreach ($newKeys as $newKey) {
                     $cssStyles[trim($newKey)] = $value;
                 }
@@ -63,7 +63,7 @@ class SassVert_Converter
         foreach ($mediaStyles as $media => $mediaBlock) {
             foreach ($mediaBlock as $mKey => $mStyle) {
                 if (preg_match("/((?=,)|(?=, ))/", $mKey)) {
-                    $newMsKeys = split(",", trim($mKey));
+                    $newMsKeys = preg_split("/,/", trim($mKey));
                     foreach ($newMsKeys as $newMsKey) {
                         $mediaStyles[$media][trim($newMsKey)] = $mStyle;
                     }
@@ -97,6 +97,7 @@ class SassVert_Converter
             fwrite($this->outputSCSSFile, $this->indent . $node->getNodeName() . " {\n");
             $this->indentAdd();
             fwrite($this->outputSCSSFile, $node->printStyles($this->indent) . "\n");
+            // Get MQ Styles
             if ($node->hasChildren()) {
                 $nodeList = array();
                 foreach ($node->getChildrenNodesObj() as $child) {
@@ -325,7 +326,7 @@ class SassVert_Converter
             if (isset($node["class"])) {
                 $class    = "." . str_replace(" ", ".", $node["class"]);
                 $nodeName = $class;
-                $short = split(" ", trim($node["class"]));
+                $short = preg_split("/\s/", trim($node["class"]));
                 $nodeNameShort = "." . $short[0];
             } elseif (isset($node["id"])) {
                 $id       = "#" . $node["id"];

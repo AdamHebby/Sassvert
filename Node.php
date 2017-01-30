@@ -70,7 +70,7 @@ class Node
     }
     public function getClass()
     {
-        $classes = split(" ", trim($this->class));
+        $classes = preg_split("/\s/", trim($this->class));
         if (count($classes) > 1) {
             $singleLine = "";
             for ($i=0; $i < count($classes); $i++) { 
@@ -87,7 +87,7 @@ class Node
     }
     public function getClassList()
     {
-        $classes = split(" ", trim($this->class));
+        $classes = preg_split("/\s/", trim($this->class));
         if (count($classes) > 1) {
             for ($i=0; $i < count($classes); $i++) { 
                 $classes[$i] = "." . $classes[$i]; 
@@ -141,7 +141,7 @@ class Node
             $printStyles = $this->styles;
         }
         foreach ($printStyles as $key => $value) {
-            $styles = split(";", trim($value));
+            $styles = preg_split("/;/", trim($value));
             foreach ($styles as $style) {
                 if (trim($style) != "") {
                     $returnStyles .= $indent . trim($style) . ";\n";
