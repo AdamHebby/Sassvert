@@ -9,12 +9,12 @@ class Node
     protected $nodeName;
     protected $nodeNameShort;
     protected $childrenNodesObj = array();
-    protected $childrenID       = array();
+    protected $childrenID = array();
     protected $parentID;
     protected $inlineStyles;
     protected $styles;
     protected $mediaStyles;
-
+    
     public function __construct($customID, $tag, $nodeName, $class = null, $id = null, $inlineStyles = null)
     {
         $this->customID      = $customID;
@@ -78,8 +78,8 @@ class Node
         $classes = preg_split("/\s/", trim($this->class));
         if (count($classes) > 1) {
             $singleLine = "";
-            for ($i=0; $i < count($classes); $i++) { 
-                $singleLine .= "." . $classes[$i]; 
+            for ($i = 0; $i < count($classes); $i++) {
+                $singleLine .= "." . $classes[$i];
             }
             return $singleLine;
         } else {
@@ -94,13 +94,15 @@ class Node
     {
         $classes = preg_split("/\s/", trim($this->class));
         if (count($classes) > 1) {
-            for ($i=0; $i < count($classes); $i++) { 
-                $classes[$i] = "." . $classes[$i]; 
+            for ($i = 0; $i < count($classes); $i++) {
+                $classes[$i] = "." . $classes[$i];
             }
             return $classes;
         } else {
             if (trim($this->class) != "") {
-                return array("." . $this->class);
+                return array(
+                    "." . $this->class
+                    );
             } else {
                 return $this->class;
             }
@@ -139,7 +141,7 @@ class Node
         if ($this->styles == null) {
             return "";
         }
-        $returnStyles="";
+        $returnStyles = "";
         if ($this->inlineStyles != null) {
             $printStyles = array_merge($this->styles, $this->inlineStyles);
         } else {
@@ -160,7 +162,7 @@ class Node
         if ($this->mediaStyles == null) {
             return "";
         }
-        $returnStyles="";
+        $returnStyles = "";
         foreach ($this->mediaStyles as $media => $selectors) {
             $returnStyles .= $indent . $media . " {\n";
             foreach ($selectors as $key => $value) {

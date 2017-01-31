@@ -11,30 +11,40 @@ class SassVert_Converter
     protected $nodeTree;
     protected $outputSCSSFile;
     protected $indent = "";
-
-    public function __construct($html)
+    
+    public function __construct($html )
     {
-        $html           = $this->stripComments($html);
-        $html           = $this->stripPHP($html);
-        $this->tree     = $this->getTree($html);
-        $this->nodeTree = $this->generateNodes($this->tree);
-        $this->linkChildren();
+        $html           = $this->stripComments($html); // Remove <!-- HTML Comments -->
+        $html           = $this->stripPHP($html); // Remove PHP
+        $this->tree     = $this->getTree($html); // Generate heirarchy tree from DOM Nodes
+        $this->nodeTree = $this->generateNodes($this->tree); // Make tree arrays into tree objects
+        $this->linkChildren(); // Give parents their children!
+        $this->makeSCSSFile(); // Make empty .scss file
     }
-    function stripComments($html)
-    {
+    function stripComments($html) 
+    { // Remove <!-- HTML Comments -->
         $html = preg_replace("<!--(.*?)-->", "", $html);
         return $html;
     }
     function stripPHP($html)
+    // Remove PHP
     {
-        $html = preg_replace(array('/<(\?|\%)\=?(php)?/', '/(\%|\?)>/'), array('',''), $html);
+        $html = preg_replace(array(
+            '/<(\?|\%)\=?(php)?/',
+            '/(\%|\?)>/'
+        ), array(
+            '',
+            ''
+        ), $html);
         return $html;
     }
     public function DumpNodeTree()
+    // For Debugging
     {
         var_dump($this->nodeTree);
     }
     public function setCSSFile($css)
+    // Sets up CSS file after initialising
     {
         if ($css != null || $css != "") {
             $StyleSheetArray   = $this->splitCSSFile($css);
@@ -42,10 +52,10 @@ class SassVert_Converter
             $this->mediaStyles = $StyleSheetArray[1];
             $this->parseCSS();
             $this->linkCSS();
-            $this->makeSCSSFile();
         }
     }
     function parseCSS()
+    // Find Comma Seperated CSS Values (CSCssV), then split
     {
         $cssStyles = $this->cssStyles;
         foreach ($cssStyles as $key => $value) {
@@ -58,7 +68,8 @@ class SassVert_Converter
             }
         }
         $this->cssStyles = $cssStyles;
-
+        
+        // Same as above, except for Selectors in Media Query blocks
         $mediaStyles = $this->mediaStyles;
         foreach ($mediaStyles as $media => $mediaBlock) {
             foreach ($mediaBlock as $mKey => $mStyle) {
@@ -74,6 +85,7 @@ class SassVert_Converter
         $this->mediaStyles = $mediaStyles;
     }
     function linkCSS()
+    // Give Each HTML Node their styles
     {
         foreach ($this->nodes as $customID => $node) {
             if ($node->getParentID() != null) {
@@ -83,16 +95,18 @@ class SassVert_Converter
             }
             $selectors = $this->getSelectors($node, $parentNode);
             $styles    = $this->findMatchingStyles($selectors); // TODO
-            $node->setStyles($styles[0]); 
-            $node->setMediaStyles($styles[1]); 
+            $node->setStyles($styles[0]);
+            $node->setMediaStyles($styles[1]);
         }
     }
     public function PrintSCSS($nodeTree = null)
-    {
+    { // Outputs SCSS to file
         if ($nodeTree == null) {
             $nodeTree = $this->nodeTree;
         } elseif (is_array($nodeTree) == false) {
-            $nodeTree = array($nodeTree);
+            $nodeTree = array(
+                $nodeTree
+            );
         }
         foreach ($nodeTree as $node) {
             fwrite($this->outputSCSSFile, $this->indent . $node->getNodeName() . " {\n");
@@ -120,15 +134,15 @@ class SassVert_Converter
         }
     }
     function indentAdd()
-    {
+    { // Increases indentation level
         $this->indent .= "  ";
     }
     function indentTake()
-    {
+    { // Decreases indentation level
         $this->indent = substr($this->indent, 0, -2);
     }
     function makeSCSSFile()
-    {
+    { // Generates SCSS file
         $fileCount = "1";
         while (file_exists("GeneratedSCSS_$fileCount.scss") == true) {
             $fileCount++;
@@ -138,8 +152,8 @@ class SassVert_Converter
         $this->outputSCSSFile = $file;
     }
     function getSelectors($node, $parentNode)
-    {
-        $selectors = array();
+    { // Gets all possible selectors foreach HTML node
+        $selectors   = array();
         $selectors[] = $node->getClass();
         $selectors[] = $node->getTag() . $node->getClass();
         if ($node->getId() !== "#") {
@@ -188,31 +202,36 @@ class SassVert_Converter
         return $selectors;
     }
     function findMatchingStyles($selectors)
-    {
-        $cssStyles = $this->cssStyles;
-        $mqStyles = $this->mediaStyles;
-        $styles = array();
+    { // Grabs styles that match selectors
+        $cssStyles   = $this->cssStyles;
+        $mqStyles    = $this->mediaStyles;
+        $styles      = array();
         $mediaStyles = array();
         foreach ($selectors as $selector) {
             foreach ($mqStyles as $mediaParam => $mStyles) {
                 if (isset($mStyles[$selector])) {
-                    $mediaStyles[$mediaParam] = array($selector => $mStyles[$selector]);
+                    $mediaStyles[$mediaParam] = array(
+                        $selector => $mStyles[$selector]
+                    );
                 }
             }
             if (isset($cssStyles[$selector])) {
                 $styles[$selector] = $cssStyles[$selector];
             }
         }
-        return array($styles, $mediaStyles);
+        return array(
+            $styles,
+            $mediaStyles
+        );
     }
     function removeMediaQueries($cssIn)
-    {
+    { // Remove Media queries from CSS file
         $re     = '~@media\b[^{]*({((?:[^{}]+|(?1))*)})~';
         $cssOut = preg_replace($re, "", $cssIn);
         return trim($cssOut);
     }
     function returnStyles($stylesList)
-    {
+    { // Returns styles in array from css block array("body" => "width: 100%;")
         $result = array();
         $css    = trim($stylesList);
         preg_match_all('/(?ims)([a-zA-Z0-9\s\,\.\:#_\-\*]+)\{([^\}]*)\}/', $css, $arr);
@@ -228,7 +247,7 @@ class SassVert_Converter
         return $result;
     }
     function getMediaQueries($css)
-    {
+    { // Grabs media queries from css block
         $re = '~@media\b[^{]*({((?:[^{}]+|(?1))*)})~';
         preg_match_all($re, $css, $matches, PREG_PATTERN_ORDER);
         
@@ -242,7 +261,7 @@ class SassVert_Converter
         return $allMediaQueries;
     }
     function splitCSSFile($css)
-    {
+    { // Splits Generic CSS and Media Queries into 2 parts for easier parsing 
         if (file_exists($css)) {
             $css = file_get_contents($css);
         } else {
@@ -270,7 +289,7 @@ class SassVert_Converter
         return $result;
     }
     function linkChildren()
-    {
+    { // Gives parents their children
         foreach ($this->nodes as $customID => $node) {
             $childrenNodes = $node->getChildrenNodesObj();
             $children      = array();
@@ -283,7 +302,7 @@ class SassVert_Converter
         }
     }
     function generateNodes($node)
-    {
+    { // Generates Objects from HTML
         if (is_array($node)) {
             if (isset($node["tag"])) {
                 $tag                           = $node["tag"];
@@ -320,12 +339,12 @@ class SassVert_Converter
         }
     }
     function getNodeName($node)
-    {
+    { // Gets a node name for HTML block. <img ...> -> img | <img class="img" ...> -> .img
         if (is_array($node)) {
-            $tag      = null;
-            $class    = null;
-            $id       = null;
-            $nodeName = null;
+            $tag           = null;
+            $class         = null;
+            $id            = null;
+            $nodeName      = null;
             $nodeNameShort = null;
             if (isset($node["tag"])) {
                 $tag = $node["tag"];
@@ -333,31 +352,34 @@ class SassVert_Converter
                 return false;
             }
             if (isset($node["class"])) {
-                $class    = "." . str_replace(" ", ".", $node["class"]);
-                $nodeName = $class;
-                $short = preg_split("/\s/", trim($node["class"]));
+                $class         = "." . str_replace(" ", ".", $node["class"]);
+                $nodeName      = $class;
+                $short         = preg_split("/\s/", trim($node["class"]));
                 $nodeNameShort = "." . $short[0];
             } elseif (isset($node["id"])) {
-                $id       = "#" . $node["id"];
-                $nodeName = $id;
+                $id            = "#" . $node["id"];
+                $nodeName      = $id;
                 $nodeNameShort = $id;
             } elseif (isset($tag)) {
                 if ($tag == "input" && isset($node["type"])) {
                     $type = $node["type"];
                     $tag  = $tag . "[type=\"$type\"]";
                 }
-                $nodeName = $tag;
+                $nodeName      = $tag;
                 $nodeNameShort = $tag;
             }
             if (isset($nodeName)) {
-                return array($nodeName, $nodeNameShort);
+                return array(
+                    $nodeName,
+                    $nodeNameShort
+                );
             } else {
                 return false;
             }
         }
     }
     function getNode($id)
-    {
+    { // Returns object based on Custom ID
         foreach ($this->nodes as $customID => $node) {
             if ($node->getCustomID() === $id) {
                 return $node;
@@ -365,7 +387,7 @@ class SassVert_Converter
         }
     }
     function getTree($input)
-    {
+    { // Generates simple html tree from HTML
         $tree = $this->html_to_tree($input);
         if ($tree["tag"] === 'html') {
             $tree = array_filter($tree["children"], function($ar)
@@ -376,7 +398,7 @@ class SassVert_Converter
         return $tree;
     }
     function html_to_tree($html)
-    {
+    { // Generates simple html tree from HTML
         $dom = new DOMDocument();
         libxml_use_internal_errors(true); // Turn off errors for loading the HTML
         $dom->loadHTML($html);
@@ -392,7 +414,7 @@ class SassVert_Converter
     }
     
     function node_to_obj($element)
-    {
+    { // Generates html from DOM Document (html)
         $obj = array(
             "tag" => $element->tagName
         );
