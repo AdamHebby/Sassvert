@@ -83,7 +83,8 @@ class SassVert_Converter
             }
             $selectors = $this->getSelectors($node, $parentNode);
             $styles    = $this->findMatchingStyles($selectors); // TODO
-            $node->setStyles($styles); 
+            $node->setStyles($styles[0]); 
+            $node->setMediaStyles($styles[1]); 
         }
     }
     public function PrintSCSS($nodeTree = null)
@@ -97,6 +98,7 @@ class SassVert_Converter
             fwrite($this->outputSCSSFile, $this->indent . $node->getNodeName() . " {\n");
             $this->indentAdd();
             fwrite($this->outputSCSSFile, $node->printStyles($this->indent) . "\n");
+            fwrite($this->outputSCSSFile, $node->printMediaStyles($this->indent));
             // Get MQ Styles
             if ($node->hasChildren()) {
                 $nodeList = array();
@@ -188,13 +190,20 @@ class SassVert_Converter
     function findMatchingStyles($selectors)
     {
         $cssStyles = $this->cssStyles;
+        $mqStyles = $this->mediaStyles;
         $styles = array();
+        $mediaStyles = array();
         foreach ($selectors as $selector) {
+            foreach ($mqStyles as $mediaParam => $mStyles) {
+                if (isset($mStyles[$selector])) {
+                    $mediaStyles[$mediaParam] = array($selector => $mStyles[$selector]);
+                }
+            }
             if (isset($cssStyles[$selector])) {
                 $styles[$selector] = $cssStyles[$selector];
             }
         }
-        return $styles;
+        return array($styles, $mediaStyles);
     }
     function removeMediaQueries($cssIn)
     {

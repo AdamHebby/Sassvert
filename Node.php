@@ -13,6 +13,7 @@ class Node
     protected $parentID;
     protected $inlineStyles;
     protected $styles;
+    protected $mediaStyles;
 
     public function __construct($customID, $tag, $nodeName, $class = null, $id = null, $inlineStyles = null)
     {
@@ -27,6 +28,10 @@ class Node
     public function setStyles($styles)
     {
         $this->styles = $styles;
+    }
+    public function setMediaStyles($styles)
+    {
+        $this->mediaStyles = $styles;
     }
     public function setParentID($int)
     {
@@ -147,6 +152,28 @@ class Node
                     $returnStyles .= $indent . trim($style) . ";\n";
                 }
             }
+        }
+        return $returnStyles;
+    }
+    public function printMediaStyles($indent)
+    {
+        if ($this->mediaStyles == null) {
+            return "";
+        }
+        $returnStyles="";
+        foreach ($this->mediaStyles as $media => $selectors) {
+            $returnStyles .= $indent . $media . " {\n";
+            foreach ($selectors as $key => $value) {
+                $indent .= "  ";
+                $styles = preg_split("/;/", trim($value));
+                foreach ($styles as $style) {
+                    if (trim($style) != "") {
+                        $returnStyles .= $indent . trim($style) . ";\n";
+                    }
+                }
+                $indent = substr($indent, 0, -2);
+            }
+            $returnStyles .= "\n" . $indent . "}\n";
         }
         return $returnStyles;
     }
