@@ -5,7 +5,7 @@ $extraCSS = readline('Enter the name of the CSS file (if any): ');
 
 if (isset($html) == false || trim($html) == '') { // Check for valid 1st input
     exit("Invalid HTML File. Exiting. \n");
-} elseif (file_exists($html) == false || trim(file_get_contents(trim($html))) == '') { // Check for valid HTML file
+} elseif (file_exists(trim($html)) == false || trim(file_get_contents(trim($html))) == '') { // Check for valid HTML file
     exit("HTML File is Empty. Exiting. \n");
 }
 

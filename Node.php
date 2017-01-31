@@ -7,6 +7,7 @@ class Node
     protected $tag;
     protected $id;
     protected $nodeName;
+    protected $nodeNameB;
     protected $nodeNameShort;
     protected $childrenNodesObj = array();
     protected $childrenID = array();
@@ -36,6 +37,10 @@ class Node
     public function setParentID($int)
     {
         $this->parentID = $int;
+    }
+    public function setNodeNameB($nodeNameB)
+    {
+        $this->nodeNameB = $nodeNameB;
     }
     public function setChildrenID($arr)
     {
@@ -119,6 +124,10 @@ class Node
     public function getNodeName()
     {
         return $this->nodeName;
+    }
+    public function getNodeNameB()
+    {
+        return $this->nodeNameB;
     }
     public function getNodeNameShort()
     {

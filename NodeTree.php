@@ -94,12 +94,12 @@ class SassVert_Converter
                 $parentNode = null;
             }
             $selectors = $this->getSelectors($node, $parentNode);
-            $styles    = $this->findMatchingStyles($selectors); // TODO
+            $styles    = $this->findMatchingStyles($selectors);
             $node->setStyles($styles[0]);
             $node->setMediaStyles($styles[1]);
         }
     }
-    public function PrintSCSS($nodeTree = null)
+    public function PrintSCSS($nodeTree = null, $useNodeNameB = false)
     { // Outputs SCSS to file
         if ($nodeTree == null) {
             $nodeTree = $this->nodeTree;
@@ -109,19 +109,38 @@ class SassVert_Converter
             );
         }
         foreach ($nodeTree as $node) {
-            fwrite($this->outputSCSSFile, $this->indent . $node->getNodeName() . " {\n");
+            if ($useNodeNameB === true) {
+                $nodeName = $node->getNodeNameB();
+            } else {
+                $nodeName = $node->getNodeNameShort();
+            }
+            fwrite($this->outputSCSSFile, $this->indent . $nodeName . " {\n");
             $this->indentAdd();
             fwrite($this->outputSCSSFile, $node->printStyles($this->indent) . "\n");
             fwrite($this->outputSCSSFile, $node->printMediaStyles($this->indent));
-            // Get MQ Styles
             if ($node->hasChildren()) {
                 $nodeList = array();
                 foreach ($node->getChildrenNodesObj() as $child) {
-                    if (in_array($child->getNodeNameShort(), $nodeList)) {
-                        // Break Down -- TODO
-                        $this->PrintSCSS($child);
+                    $nodeName = $child->getNodeNameShort();
+                    if (in_array($nodeName, $nodeList)) {
+                        $foundUnique = false;
+                        while ($foundUnique != true) {
+                            $pos = strpos($child->getNodeName(), $nodeName);
+                            if ($pos !== false) {
+                                $nodeNameB = substr_replace($child->getNodeName(), "", $pos, strlen($nodeName));
+                            }
+                            if (trim($nodeNameB) != '' && trim($nodeNameB) !== null && 
+                                in_array(trim($nodeNameB), $nodeList) == false) {
+                                $child->setNodeNameB(trim($nodeNameB));
+                                $this->PrintSCSS($child, true);
+                                $foundUnique = true;
+                            } else {
+                                break;
+                            }
+                        }
+                        
                     } else {
-                        $nodeList[] = $child->getNodeNameShort();
+                        $nodeList[] = $nodeName;
                         $this->PrintSCSS($child);
                     }
                 }
