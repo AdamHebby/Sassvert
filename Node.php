@@ -16,7 +16,10 @@ class Node
     protected $styles;
     protected $mediaStyles;
     
-    public function __construct($customID, $tag, $nodeName, $class = null, $id = null, $inlineStyles = null)
+    public function __construct(
+        $customID, $tag, $nodeName, 
+        $class = null, $id = null, $inlineStyles = null
+        )
     {
         $this->customID      = $customID;
         $this->tag           = $tag;
