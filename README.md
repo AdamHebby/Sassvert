@@ -8,22 +8,84 @@ HTML to SCSS converter: http://html2sass.com/
 
 To run:
 
-`php Convert.php`
-
-Enter the name of the HTML file: `html.html`
-
-Enter the name of the CSS file (if any): `css.css`
+`php SassVert/Convert.php html.html`
 
 OUTPUT:
 
 ```
-.main-wrapper {
+body {
 
-  .sub-wrapper {
+  .main-wrapper {
 
-    color: black;
+    .title-wrapper {
 
-  }
+      .title {
 
-}
+      } 
+    } 
+    .content-wrapper {
+
+      .content {
+
+        .description {
+
+        } 
+        .tab-container {
+
+          .tabs {
+
+            .tab {
+
+            } 
+            .tab2 {
+
+            } 
+          } 
+          .tab-content {
+
+            .file-inputs {
+
+              .file-selector {
+
+                .select-wrapper {
+
+                  .input {
+
+                  } 
+                  .input-small {
+
+                  } 
+                  .btn {
+
+                    .fa {
+
+                    } 
+                  } 
+                } 
+              } 
+              .btn {
+
+              } 
+            } 
+            .raw-input {
+
+            } 
+          } 
+        } 
+      } 
+    } 
+    .output-wrapper {
+
+      .output {
+
+        .output-text {
+
+          .title {
+
+          } 
+        } 
+      } 
+    } 
+  } 
+} 
 ```
