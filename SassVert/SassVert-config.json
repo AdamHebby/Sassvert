@@ -1,0 +1,16 @@
+{
+    // tab = \t, number = number of spaces (eg 4)
+    "indentation_type": "2",
+
+    // Output name of file
+    "output_file_name": "output/GeneratedSCSS.scss",
+
+    // SCSS will be outputted to the same file, true will add _$num to end
+    "overwrite_output": false,
+
+    // Output all output to folder, set to false to turn off
+    "output_folder": "output",
+
+    // TODO - Allow whole directory to be processed (find .html files)
+    "set_input_folder": false
+}

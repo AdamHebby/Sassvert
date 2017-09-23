@@ -11,30 +11,87 @@ class SassVert_Converter
     protected $nodeTree;
     protected $outputSCSSFile;
     protected $indent = "";
+    protected $defaultConfigFile = "SassVert-config.json";
+    public $conf;
     
     /**
-     * TODO - Seperate functions from construct
-     * TODO - Allow return of SCSS instead of output to file
      * TODO - Allow whole directory to be processed (find .html files)
-     * TODO - Make generation of SCSS file better (use fopen to check if empty)
-     * TODO - Allow config, such as tab/spacing width, SCSS/SASS standard
-     * TODO - Output all output to output folder
-     * TODO - Generate mixins for frequently used styles and classes
-     * TODO - Take website URL instead, list css files and allow user to pick
-     *        out which ones they want using. Either split into seperate .scss
-     *        files or into one. 
-     * TODO - Allow splitting of media queries to diff files (_desktop.scss)
-     *          - Generate SCSS include file too
      */
 
-    public function __construct($html)
+    public function __construct()
     {
-        $html           = $this->stripComments($html); // Remove <!-- HTML Comments -->
-        $html           = $this->stripPHP($html); // Remove PHP
-        $this->tree     = $this->getTree($html); // Generate heirarchy tree from DOM Nodes
-        $this->nodeTree = $this->generateNodes($this->tree); // Make tree arrays into tree objects
-        $this->linkChildren(); // Give parents their children!
-        $this->makeSCSSFile(); // Make empty .scss file
+    }
+
+
+    /**
+     * Sets up the HTML
+     */
+    public function setHTML($html)
+    {
+        $html           = $this->stripComments($html);
+        $html           = $this->stripPHP($html);
+        $this->tree     = $this->generateHTMLTree($html);
+        $this->nodeTree = $this->generateNodes($this->tree);
+        unset($this->tree);
+        $this->linkChildren();
+        $this->makeSCSSFile();
+    }
+
+    /**
+     * Loads configuration file - loads default if not passed in
+     */
+    public function loadConfigFile($configFile = false)
+    {
+        if ($configFile == false) {
+            $configFile = $this->defaultConfigFile;
+        }
+
+        if (@fopen($configFile, 'r') !== false) {
+            $configFile = file_get_contents($configFile);
+
+            if (is_array($configFile) !== false) {
+                $this->loadConfigAsArray($configFile);
+            } elseif($this->isValidJson($configFile) !== false) {
+                $this->loadConfigAsJson($configFile);
+            } else {
+                die("Unable to load config file as an array or JSON \n");
+            }
+
+        } else {
+            die("Unable to load config file ({$configFile}) \n");
+        }
+    }
+
+    /**
+     * Load the config as an array
+     */
+    public function loadConfigAsArray($confArray)
+    {
+        if (is_array($confArray) !== true) {
+            die("Invalid Config - Not an array! \n");
+        }
+        $this->conf = $confArray;
+        return true;
+    }
+
+    /**
+     * Load the config as JSON, strip comments and convert to array
+     */
+    public function loadConfigAsJson($confJson)
+    {
+        if ($this->isValidJson($confJson) !== true) {
+            die("Invalid Config - Not Valid JSON! \n");
+        }
+        $this->conf = json_decode(json_minify($confJson), true);
+        return true;
+    }
+
+    /**
+     * Checks if the JSON is valid - allows comments
+     */
+    private function isValidJson($strJson) {
+        json_decode(json_minify($strJson)); 
+        return (json_last_error() === JSON_ERROR_NONE); 
     }
     
     /**
@@ -69,7 +126,7 @@ class SassVert_Converter
     /**
      * Sets up CSS file after initialising
      */
-    public function setCSSFile($css)
+    public function setCSS($css)
     {
         if (trim($css) !== '') {
             $StyleSheetArray   = $this->splitCSSFile($css);
@@ -78,7 +135,7 @@ class SassVert_Converter
             $this->parseCSS();
             $this->linkCSS();
         } else {
-            echo "Error: Invalid CSS passed to setCSSFile() \n";
+            echo "Error: Invalid CSS passed to setCSS() \n";
         }
     }
     
@@ -136,7 +193,7 @@ class SassVert_Converter
     /**
      * Outputs SCSS to file
      */
-    public function PrintSCSS($nodeTree = null, $useNodeNameB = false)
+    public function outputSCSS($nodeTree = null, $useNodeNameB = false)
     {
         if ($nodeTree == null) {
             $nodeTree = $this->nodeTree;
@@ -169,7 +226,7 @@ class SassVert_Converter
                             if (trim($nodeNameB) != '' && trim($nodeNameB) !== null && 
                                 in_array(trim($nodeNameB), $nodeList) == false) {
                                 $child->setNodeNameB(trim($nodeNameB));
-                                $this->PrintSCSS($child, true);
+                                $this->outputSCSS($child, true);
                                 $foundUnique = true;
                             } else {
                                 break;
@@ -178,7 +235,7 @@ class SassVert_Converter
                         
                     } else {
                         $nodeList[] = $nodeName;
-                        $this->PrintSCSS($child);
+                        $this->outputSCSS($child);
                     }
                 }
                 $this->indentTake();
@@ -195,7 +252,12 @@ class SassVert_Converter
      */
     private function indentAdd()
     {
-        $this->indent .= "  ";
+        $indent = $this->conf["indentation_type"];
+        if ($indent === "tab") {
+            $this->indent .= "\t";
+        } else {
+            $this->indent .= str_repeat(' ', $indent);
+        }
     }
 
     /**
@@ -203,7 +265,12 @@ class SassVert_Converter
      */
     private function indentTake()
     {
-        $this->indent = substr($this->indent, 0, -2);
+        $indent = $this->conf["indentation_type"];
+        if ($indent === "tab") {
+            $this->indent = substr($this->indent, 0, -1);
+        } else {
+            $this->indent = substr($this->indent, 0, -$indent);
+        }
     }
 
     /**
@@ -211,13 +278,30 @@ class SassVert_Converter
      */
     private function makeSCSSFile()
     {
-        $fileCount = "1";
-        while (file_exists("GeneratedSCSS_$fileCount.scss") == true) {
+
+        $filename = $this->conf["output_file_name"];
+        $directory = trim(pathinfo($filename, PATHINFO_DIRNAME), '.');
+        $ext      = "." . pathinfo($filename, PATHINFO_EXTENSION);
+        $filename = pathinfo($filename, PATHINFO_FILENAME);
+        $directory = rtrim($directory, '/') . '/';
+
+        if (file_exists($directory) !== true && $directory !== '') {
+            mkdir($directory);
+        }
+
+        $fileCount = 1;
+        while (file_exists("{$directory}{$filename}_{$fileCount}{$ext}") == true) {
             $fileCount++;
         }
-        $file = fopen("GeneratedSCSS_$fileCount.scss", "w");
-        echo "SCSS file made: GeneratedSCSS_$fileCount.scss\n";
-        $this->outputSCSSFile = $file;
+        if ($this->conf["overwrite_output"] == false) {
+            $file = fopen("{$directory}{$filename}_{$fileCount}{$ext}", "w");
+            $this->outputSCSSFile = $file;
+        } else {
+            $fileCount = ($fileCount == 1) ? 1 : $fileCount -= 1;
+            $file = fopen("{$directory}{$filename}_{$fileCount}{$ext}", "w");
+            $this->outputSCSSFile = $file;
+            return false;
+        }
     }
 
     /**
@@ -498,7 +582,7 @@ class SassVert_Converter
     /**
      * Generates simple html tree from HTML
      */
-    private function getTree($input)
+    private function generateHTMLTree($input)
     { 
         $tree = $this->html_to_tree($input);
         if ($tree["tag"] === 'html') {

@@ -2,19 +2,19 @@
 
 class Node
 {
-    protected $customID;
-    protected $class;
-    protected $tag;
-    protected $id;
-    protected $nodeName;
-    protected $nodeNameB;
-    protected $nodeNameShort;
-    protected $childrenNodesObj = array();
-    protected $childrenID = array();
-    protected $parentID;
-    protected $inlineStyles;
-    protected $styles;
-    protected $mediaStyles;
+    public $customID;
+    public $class;
+    public $tag;
+    public $id;
+    public $nodeName;
+    public $nodeNameB;
+    public $nodeNameShort;
+    public $childrenNodesObj = array();
+    public $childrenID = array();
+    public $parentID;
+    public $inlineStyles;
+    public $styles;
+    public $mediaStyles;
     
     public function __construct(
         $customID, $tag, $nodeName, 

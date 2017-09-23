@@ -10,14 +10,14 @@ if (isset($html) == false || trim($html) == '') {
     // Check for valid 1st input
     exit("Invalid HTML File. Exiting. \n");
 } elseif (
+     // Check for valid HTML file
     file_exists(trim($html)) == false || 
     trim(file_get_contents(trim($html))) == '') {
-     // Check for valid HTML file
     exit("HTML File is Empty. Exiting. \n");
 }
 
-// User has defined CSS but it doesn't exist
 if (trim($css) !== '' && file_exists(trim($css)) == false) {
+	// User has defined CSS but it doesn't exist
     exit("Invalid CSS File. Exiting. \n");
 } elseif (trim($css) !== '' && trim(file_get_contents(trim($css))) == '') {
     // User has defined CSS but it's empty
@@ -29,9 +29,14 @@ $html = trim(file_get_contents(trim($html)));
 
 require_once('NodeTree.php');
 require_once('Node.php');
+require_once('minify.json.php');
 
-$SassVert_Converter = new SassVert_Converter($html); // Initiate Class
+$SassVert_Converter = new SassVert_Converter(); // Initiate Class
 
-$SassVert_Converter->setCSSFile($css); // Include CSS file
+$SassVert_Converter->loadConfigFile('SassVert/SassVert-config.json');
 
-$SassVert_Converter->PrintSCSS(); // Output SCSS
+$SassVert_Converter->setHTML($html); // Include CSS file
+// $SassVert_Converter->setCSS($css); // Include CSS file
+
+
+$SassVert_Converter->outputSCSS(); // Output SCSS
